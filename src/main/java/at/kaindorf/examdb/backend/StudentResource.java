@@ -9,14 +9,14 @@ import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.lang.annotation.Repeatable;
+import java.lang.reflect.Field;
 import java.net.URI;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -36,22 +36,37 @@ public class StudentResource {
 
     @GetMapping("/all")
     public ResponseEntity<Iterable<Student>> getAllStudents(@RequestParam(name = "class", required = false, defaultValue = "")String str, @RequestParam(name = "orderBy", required = false, defaultValue = "")String order) {
-
+        List<String> criteria = new ArrayList<>();
+        criteria = List.of("firstname", "lastname", "studentid");
         List<Student> students = mockDB.getAllStudents();
-        if (!(order.equals(""))) {
-            Comparator<String> customComparator = new Comparator<String>() {
-                @Override
-                public int compare(Student s1, Student s2) {
+        if (!(order.equals("")) && criteria.contains(order)) {
+            System.out.println("ping");
+            if (order.equals(criteria.get(0))) {
+                System.out.println("Am i in here");
+                Collections.sort(students, Comparator.comparing(Student::getFirstname));
+            }
+            else if (order.equals(criteria.get(1))) Collections.sort(students, Comparator.comparing(Student::getLastname));
+            else if (order.equals(criteria.get(2))) Collections.sort(students, Comparator.comparing(Student::getStudentId));
 
-                    return Integer.compare(s1.length(), s2.length());
-                }
-            };
+
         }
 
         System.out.println(str);
-        if (str.equals("")) return ResponseEntity.ok(mockDB.getAllStudents());
-        return ResponseEntity.ok(mockDB.getAllStudents().stream().filter(s -> s.getClasslist().getClassname().equals(str)).collect(Collectors.toList()));
+        if (str.equals("")) return ResponseEntity.ok(students);
+        return ResponseEntity.ok(students.stream().filter(s -> s.getClasslist().getClassname().equals(str)).collect(Collectors.toList()));
     }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<Student> patchCustomer(@PathVariable Long id, @RequestBody Student student) {
+        Optional<Student> studentOptional = mockDB.patchStudent(id, student);
+        if (studentOptional.isPresent()) {
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(studentOptional.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+
 
 
 }
