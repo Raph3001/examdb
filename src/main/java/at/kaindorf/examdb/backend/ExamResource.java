@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  * Time: 08:17
  */
 @RestController
-@RequestMapping("/exams")
+@RequestMapping("/exam")
 @Slf4j
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
@@ -34,30 +34,32 @@ public class ExamResource {
 
     private final ExamMockDB mockDB;
 
-    @GetMapping("")
-    public ResponseEntity<Iterable<Exam>> getAllExams(@RequestParam(name = "studentId", required = true)Integer id) {
-        System.out.println(id);
-        return ResponseEntity.ok(mockDB.getExamsOfStudent(id));
-
-    }
 
     @DeleteMapping("/{studentId}/{examId}")
     public ResponseEntity<Exam> getAllExams(@PathVariable Long studentId, @PathVariable Long examId) {
-        return ResponseEntity.ok(mockDB.removeExam(studentId, examId));
+
+        try {
+            return ResponseEntity.ok(mockDB.removeExam(studentId, examId));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
 
     }
 
     @PostMapping("/{studentId}")
     public ResponseEntity<Exam> addExam(@RequestBody Exam exam, @PathVariable Long studentId) {
-        Optional<Exam> examOptional = mockDB.addExam(exam, studentId);
-        if (examOptional.isPresent()) {
-            URI location = ServletUriComponentsBuilder
-                    .fromCurrentRequest()
-                    .path("/{studentId}")
-                    .buildAndExpand(examOptional.get().getExamId())
-                    .toUri();
-            return ResponseEntity.created(location).build();
-            //return ResponseEntity.status(HttpStatus.CREATED).body(customerOptional.get());
+        if (!((mockDB.getExamsOfStudent(Math.toIntExact(studentId)).stream().filter(e -> e.getDateOfExam().equals(exam.getDateOfExam()))).collect(Collectors.toList()).size() >= 1)) {
+            Optional<Exam> examOptional = mockDB.addExam(exam, studentId);
+            if (examOptional.isPresent()) {
+                URI location = ServletUriComponentsBuilder
+                        .fromCurrentRequest()
+                        .path("/{studentId}")
+                        .buildAndExpand(examOptional.get().getExamId())
+                        .toUri();
+                return ResponseEntity.created(location).build();
+                //return ResponseEntity.status(HttpStatus.CREATED).body(customerOptional.get());
+            }
         }
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
     }

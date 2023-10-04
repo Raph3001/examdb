@@ -35,14 +35,18 @@ public class StudentResource {
     private final ExamMockDB mockDB;
 
     @GetMapping("/all")
-    public ResponseEntity<Iterable<Student>> getAllStudents(@RequestParam(name = "class", required = false, defaultValue = "")String str, @RequestParam(name = "orderBy", required = false, defaultValue = "")String order) {
+    public ResponseEntity<Iterable<Student>> getAllStudents() {
+        List<Student> students = mockDB.getAllStudents();
+        return ResponseEntity.ok(students);
+    }
+
+    @GetMapping("")
+    public ResponseEntity<Iterable<Student>> getStudentsWithParam(@RequestParam(name = "class", required = false, defaultValue = "")String str, @RequestParam(name = "orderBy", required = false, defaultValue = "")String order) {
         List<String> criteria = new ArrayList<>();
         criteria = List.of("firstname", "lastname", "studentid");
         List<Student> students = mockDB.getAllStudents();
         if (!(order.equals("")) && criteria.contains(order)) {
-            System.out.println("ping");
             if (order.equals(criteria.get(0))) {
-                System.out.println("Am i in here");
                 Collections.sort(students, Comparator.comparing(Student::getFirstname));
             }
             else if (order.equals(criteria.get(1))) Collections.sort(students, Comparator.comparing(Student::getLastname));
@@ -51,9 +55,10 @@ public class StudentResource {
 
         }
 
-        System.out.println(str);
         if (str.equals("")) return ResponseEntity.ok(students);
-        return ResponseEntity.ok(students.stream().filter(s -> s.getClasslist().getClassname().equals(str)).collect(Collectors.toList()));
+        List<Student> filteredStudents = students.stream().filter(s -> s.getClasslist().getClassname().equals(str)).collect(Collectors.toList());
+        if (filteredStudents.size() == 0) return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        return ResponseEntity.ok(filteredStudents);
     }
 
     @PatchMapping("/{id}")

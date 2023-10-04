@@ -47,7 +47,6 @@ public class ExamMockDB {
                     });
                 });
             });
-            System.out.println(classes);
         } catch (IOException e) {
             log.error("reading json-data failed - " + e.toString());
         }
@@ -58,7 +57,6 @@ public class ExamMockDB {
         classes.forEach(c -> {
             toReturn.addAll(c.getStudents());
         });
-        System.out.println(toReturn);
         return toReturn;
     }
 
@@ -109,9 +107,7 @@ public class ExamMockDB {
     }
 
     public Optional<Exam> addExam(Exam exam, Long studentId) {
-        System.out.println(exam.getExamId());
         if (exam.getExamId() == 0) {
-            System.out.println("What the fuck");
 //      Long maxId = customers.stream().max(Comparator.comparing(Customer::getId)).get().getId();
             AtomicInteger integer = new AtomicInteger(0);
             classes.forEach(c -> {
@@ -126,10 +122,8 @@ public class ExamMockDB {
             exam.setStudent(student);
             student.getExams().add(exam);
         } else {
-            System.out.println("What the fuck 2");
 
             Student student = classes.stream().map(c -> c.getStudents().stream().filter(s -> s.getStudentId() == studentId).findFirst()).collect(Collectors.toList()).get(0).get();
-            System.out.println(student);
             exam.setStudent(student);
             if (!student.getExams().contains(exam)) {
                 student.getExams().add(exam);
